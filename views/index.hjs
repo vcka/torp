@@ -31,23 +31,6 @@
 
 	<video src="" height="360px" preload="auto" controls autoplay></video>
 
-	<p>Samples Torrents:</p>
-
-	<ul id="demo_magnets">
-		<li><span class="magnet url">6c782f30ac6562a82a099f93e0c520036d3b1818</span> - <span>Better call saul</span>
-		</li>
-		<li><span class="magnet url">93d130265514286500e46926d024ca480786471a</span> - <span>Avengers: Infinity
-				War</span></li>
-		<li><span class="magnet url">6a9759bffd5c0af65319979fb7832189f4f3c35d</span> - <span>Sintel (Blender Open Movie
-				Project) <a href="https://durian.blender.org" target="_blank">durian.blender.org</a></span></li>
-		<li><span class="magnet url">6fd85ac1a2193167810da8c60e92604aedd70fe5</span> - <span>Samuel Proffitt - Depth ft.
-				Naadia (Official Video)</span></li>
-		<li><span class="magnet url">0edb493361daaf35a69571b4629202127431aaca</span> - <span>TRAD+ album experience:
-				INTERFERENCE</span></li>
-		<li><span class="magnet url">ec35ea4269c1b5613a0799d7a5c124e8478405ee</span> - <span>NUTS! <a
-					href="http://www.nutsthefilm.com/" target="_blank">www.nutsthefilm.com</a></span></li>
-	</ul>
-
 	<p>Magnet Hash <input type="text" name="magnet" placeholder="Enter torrent URL."> <button id="load">Load</button>
 	</p>
 
@@ -92,6 +75,11 @@
 		//	1.	Set the base URL
 		//
 		var api = "{{base_url}}/video";
+
+		//
+		//  Show video files on page load.
+		//
+		load_torrents_contents();
 
 		//
 		//	2.	Check every second if there is a new Magnet file in the client
@@ -167,7 +155,8 @@
 			//
 			//	1.	Get the Magnet Hash
 			//
-			var magnet = $('input').val();
+			//var magnet = $('input').val();
+			var magnet = $(this).attr("data-hash-url");
 
 			//
 			//	2.	Get the file name that was clicked
@@ -198,7 +187,7 @@
 			//		the client.
 			//
 			$.get(api + "/delete/" + magnet_hash, function (data) {
-
+				$("ul li[data-hash-url=" + magnet_hash + "]").remove();
 			});
 
 		});
@@ -307,7 +296,6 @@
 						$.each(data, function (index, obj) {
 
 							$("#magnets").append('<li data-hash="' + obj.hash + '"><span class="magnet">' + obj.name + '</span> [<span class="delete url">Delete</span>]</li>');
-
 						});
 					}
 					else {
@@ -415,6 +403,37 @@
 			}, 1000);
 		}
 
+		function load_torrents_contents() {
+			$.get(api + '/list', function (data) {
+
+				//
+				//	1.	Clear the content of the UL
+				//
+				$("#magnets").empty();
+
+				//
+				//	2.	We populate the UL only if we get data from the
+				//		server
+				//
+				if (data.length > 0) {
+					//
+					//	1.	Loop over the array to list all the Magnet
+					//		Hashes.
+					//
+					$.each(data, function (index, obj) {
+
+						$("#content").append('<li class="file url" data-name="' + obj.name + '" data-hash-url="' + obj.hash + '"><span class="url">' + obj.name + '</span> (' + format_bytes(obj.size, 0) + ') <a href="' + api + '/stream/' + obj.hash + '/' + obj.name + '">SRC</a></li>');
+					});
+				}
+				else {
+					//
+					//	1.	Display Not Available if no data is present
+					//
+					$("#content").append('<li>N/A</li>');
+					$("#magnets").append('<li>N/A</li>');
+				}
+			});
+		}
 	});
 
 	//

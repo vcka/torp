@@ -67,6 +67,10 @@ client.on('download', function (bytes) {
 //	return 		<-	An array with a list of files
 //
 
+function generate_key($s) {
+    return str_replace(array('+', '/'), array('-', '_'), base64_encode($s));
+}
+
 function getInfo(torrent, magnet, host) {
 	return new Promise((resolve, reject) => {
 		torrent.files.forEach(function (data, index, array) {
@@ -88,12 +92,11 @@ function getInfo(torrent, magnet, host) {
 								plot: 'full',
 								apikey: '47427b38'
 							});
-
 						files.push({
 							id: id++,
 							title: movieName.trim(),
 							originalTitle: data.name,
-							url: 'https://' + host + '/video/stream/' + magnet + '/' + data.name.replace(/\s/g, "%20"),
+							url: 'https://' + host + '/video/stream/' + magnet + '/' + encodeURI(data.name),
 							imgUrl: res.body.Poster,
 							length: res.body.Runtime,
 							hash: magnet,
@@ -169,7 +172,6 @@ router.get('/stream/:magnet/:file_name', function (req, res, next) {
 		torrent.resume();
 	});
 
-
 	let magnet = req.params.magnet;
 
 	//
@@ -189,7 +191,7 @@ router.get('/stream/:magnet/:file_name', function (req, res, next) {
 	//		the user selected.
 	//
 	for (i = 0; i < tor.files.length; i++) {
-		if (tor.files[i].name == req.params.file_name) {
+		if (tor.files[i].name == decodeURI(req.params.file_name)) {
 			file = tor.files[i];
 		}
 	}
@@ -361,7 +363,8 @@ router.get('/list', function (req, res, next) {
 
 		array.push({
 			name: data.name,
-			hash: data.infoHash
+			hash: data.infoHash,
+			size: data.length
 		});
 		return array;
 
